@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to (re)build and release, e.g. v1.0.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Version from tag
+        shell: pwsh
+        run: |
+          $version = $env:TAG -replace '^v', ''
+          "VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Test
+        run: dotnet test UeLogViewer.sln -c Release
+
+      - name: Publish self-contained
+        run: >
+          dotnet publish src/UeLogViewer/UeLogViewer.csproj -c Release -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=none
+          -p:Version=${{ env.VERSION }}
+          -o out/self-contained
+
+      - name: Publish framework-dependent
+        run: >
+          dotnet publish src/UeLogViewer/UeLogViewer.csproj -c Release -r win-x64
+          --self-contained false
+          -p:PublishSingleFile=true
+          -p:DebugType=none
+          -p:Version=${{ env.VERSION }}
+          -o out/framework-dependent
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          foreach ($dir in 'self-contained', 'framework-dependent') {
+            Copy-Item LICENSE, README.md "out/$dir/"
+          }
+          Compress-Archive -Path out/self-contained/* -DestinationPath "artifacts/UeLogViewer-$env:VERSION-win-x64.zip"
+          Compress-Archive -Path out/framework-dependent/* -DestinationPath "artifacts/UeLogViewer-$env:VERSION-win-x64-framework-dependent.zip"
+          Get-ChildItem artifacts | Format-Table Name, Length
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $notes = @"
+          **Which download?**
+
+          - ``UeLogViewer-$env:VERSION-win-x64.zip``: self-contained, runs on any 64-bit Windows 10/11 without installing anything.
+          - ``UeLogViewer-$env:VERSION-win-x64-framework-dependent.zip``: much smaller, needs the [.NET 9 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0).
+
+          The exe is not code-signed, so Windows SmartScreen may warn on first start: click **More info**, then **Run anyway**.
+          "@
+          gh release view $env:TAG *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:TAG artifacts/*.zip --clobber
+          } else {
+            gh release create $env:TAG artifacts/*.zip --title "UE Log Viewer $env:VERSION" --notes $notes --verify-tag
+          }

@@ -1,0 +1,37 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log sample
+      description: A few lines of the log that show the problem (remove anything private). Attach the file if it's large.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: UE Log Viewer version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: Download
+      options:
+        - Self-contained (win-x64)
+        - Framework-dependent
+        - Built from source
+  - type: input
+    id: engine
+    attributes:
+      label: Unreal Engine version
+      placeholder: e.g. 5.4, 4.27

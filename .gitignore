@@ -1,0 +1,17 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+publish/
+artifacts/
+*.zip
+
+# IDE / user files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# Portable settings written next to the exe at runtime
+UeLogViewer.settings.json

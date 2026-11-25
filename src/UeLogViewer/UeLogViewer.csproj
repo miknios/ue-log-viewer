@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>UeLogViewer</AssemblyName>
+		<RootNamespace>UeLogViewer</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Version>1.0.0</Version>
+		<Product>UE Log Viewer</Product>
+		<Description>Live viewer for Unreal Engine log files with category and level filtering.</Description>
+		<Authors>Mikołaj Wójcik</Authors>
+		<Copyright>Copyright (c) 2026 Mikołaj Wójcik</Copyright>
+		<RepositoryUrl>https://github.com/miknios/ue-log-viewer</RepositoryUrl>
+	</PropertyGroup>
+
+</Project>
